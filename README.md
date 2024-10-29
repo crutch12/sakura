@@ -1,24 +1,33 @@
 Windows: WSL (Ubuntu) + Sakura + Cisco Anyconnect
 
+> Проверялось на версиях Ubuntu
+> - ubuntu:20.04
+> - ubuntu:22.04
+
 # WSL
 
 Всё от админа (наверное)
 
 ## Установка WSL (если не установлен)
 
+> **Обязательно WSL версии 2!**
+
 Для windows 10/11 сборка 19041 и выше
 
 ```sh
+$ wsl --set-default-version 2
 $ wsl --install
 ```
 
 На более старых версиях сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
 
-## Установка Ubuntu (если не установлена)
+## Установка wsl Ubuntu (если не установлена)
 
 ```sh
-# если не установлена Ubuntu
-# или если хотите поставить другую версию, то можно, например Ubuntu-20.04. Полный список образов: $ wsl -l -o
+# полный список образов
+$ wsl -l -o
+
+# ставим "Ubuntu". Или если хотите поставить другую версию, то можно, например Ubuntu-20.04
 $ wsl --install -d Ubuntu
 # во время установки указываем логин/пароль (root/password)
 ```
@@ -36,9 +45,14 @@ $ wsl -d Ubuntu
 > Если какие-то пакеты не устанавливаются из-за сети, то пробуйте с VPN
 
 ```sh
+# обновление пакетов
+$ sudo apt-get update -y
+$ sudo apt-get install -y
+
 # установка sakura
 $ curl -sLO https://github.com/crutch12/sakura/raw/refs/heads/main/sakura-agent-2.33.5.deb
 $ sudo dpkg -i sakura-agent-2.33.5.deb
+# через 15-20 секунд можно проверить, что sakura работает: http://localhost:4567/test
 
 # устанока cisco anyconnect
 $ sudo apt install -y unzip
@@ -49,11 +63,9 @@ $ cd ./anyconnect-linux64-4.10.01075/anyconnect-linux64-4.10.01075/vpn && yes | 
 # установка gui зависимостей для работы cisco anyconnect
 $ sudo apt install -y libgtk-3-0 libwebkit2gtk-4.0-37
 
-# установка squid для проксирования трафика
-$ cd ~
+# установка squid сервера для проксирования трафика
 $ sudo apt install -y squid
-$ curl -sLO https://github.com/crutch12/sakura/raw/refs/heads/main/squid.conf
-$ sudo cp -f ./squid.conf /etc/squid/squid.conf
+$ sudo wget https://github.com/crutch12/sakura/raw/refs/heads/main/squid.conf -O /etc/squid/squid.conf
 $ sudo systemctl restart squid
 ```
 
@@ -65,6 +77,8 @@ $ sudo systemctl restart squid
 ```
 10.169.6.196 sfera.inno.local
 10.169.7.247 git.sfera.inno.local
+10.169.7.215 repo-ci.sfera.inno.local
+10.169.7.215 npm.repo-ci.sfera.inno.local
 # ...список ещё будет пополняться...
 ```
 
@@ -79,6 +93,8 @@ $ wsl -d Ubuntu dig +short git.sfera.inno.local
 # запускать через admin powershell
 $ npx -y hostile set 10.169.6.196 sfera.inno.local
 $ npx -y hostile set 10.169.7.247 git.sfera.inno.local
+$ npx -y hostile set 10.169.7.215 repo-ci.sfera.inno.local
+$ npx -y hostile set 10.169.7.215 npm.repo-ci.sfera.inno.local
 ```
 
 ## Proxy
@@ -134,7 +150,7 @@ function FindProxyForURL(url, host) {
 }
 ```
 
-> !! .pac файл должен быть доступен по http, например https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac
+> (!) .pac файл должен быть доступен по http, например https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac
 
 # Запуск Cisco (VPN)
 
@@ -157,8 +173,13 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 - Иногда wsl нужно полностью перезапускать, т.к. впн ломается
 
 ```sh
-$ wsl --shutdown
+# выкл
+$ wsl -t Ubuntu
+# вкл
 $ wsl -d Ubuntu
+
+# если предыдущий пример не работает
+$ wsl --shutdown
 ```
 
 - Проверка работы squid proxy (внутри Ubuntu)
@@ -175,9 +196,9 @@ $ sudo tail +1f /var/log/squid/access.log
 
 Теперь наш трафик проксируется через wsl виртуальную машину Ubuntu.
 
-Если мы настроили глобальную windows proxy, то, например, для браузера прокси уже работает, можно проверить: https://sfera.inno.local
+Если мы настроили windows proxy, то, например, для Google Chrome прокси уже работает, можно проверить: https://sfera.inno.local
 
-Но многие инструменты (git, npm, ssh, etc.) нужно настраивать вручную
+Но многие инструменты (git, npm, ssh, yandex browser, etc.) нужно настраивать вручную
 
 ## git
 
