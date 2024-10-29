@@ -24,7 +24,7 @@ $ wsl --set-default-version 2
 $ wsl --update
 ```
 
-На более старых версиях сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
+На более старых сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
 
 ## Установка wsl Ubuntu (если не установлена)
 
@@ -39,7 +39,7 @@ $ wsl --install Ubuntu
 
 ## Настройка Ubuntu
 
-Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco)
+Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
 ```sh
 $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
@@ -59,6 +59,7 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 10.169.7.247 git.sfera.inno.local
 10.169.7.215 repo-ci.sfera.inno.local
 10.169.7.215 npm.repo-ci.sfera.inno.local
+10.234.156.183 curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local
 # ...список ещё будет пополняться...
 ```
 
@@ -75,6 +76,7 @@ $ npx -y hostile set 10.169.6.196 sfera.inno.local
 $ npx -y hostile set 10.169.7.247 git.sfera.inno.local
 $ npx -y hostile set 10.169.7.215 repo-ci.sfera.inno.local
 $ npx -y hostile set 10.169.7.215 npm.repo-ci.sfera.inno.local
+$ npx -y hostile set 10.234.156.183 "curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local"
 ```
 
 ## Proxy
@@ -220,9 +222,13 @@ $ wsl -d Ubuntu sudo systemctl status squid
 $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 ```
 
-# Итог
+- Нужного адреса нету в hosts
+1) `$ wsl -d Ubuntu dig +short git.sfera.inno.local`
+2) Добавляем первый результат в hosts
 
-После всех настроек, остаётся только подключать/отключать vpn
+# Итог и процесс работы
+
+**После всех настроек, остаётся только подключать/отключать vpn**
 
 - Подключение VPN
 ```sh
@@ -249,3 +255,38 @@ $ wsl -d Ubuntu sudo systemctl restart sakura
 # отключить автозапуск сервиса (enable, если нужно вернуть)
 $ wsl -d Ubuntu sudo systemctl disable sakura
 ```
+
+## Запуск Google Chrome в WSL
+
+Очень удобно, когда нам нужно открыть стенд/сферу, т.к. у стендов много ip и сложно все добавить в hosts
+
+```sh
+$ wsl -d Ubuntu google-chrome
+```
+
+## Работа напрямую из WSL
+
+### Через терминал
+
+Git
+
+```sh
+# сначала cd в папку с git репой
+$ wsl -d Ubuntu git push
+```
+
+Npm
+```sh
+# сначала cd в папку с git репой
+$ wsl -d Ubuntu npm i
+$ wsl -d Ubuntu npm run dev
+```
+
+### Через VS Code WSL
+
+- https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl
+
+### Через Webstorm
+
+- https://www.jetbrains.com/help/webstorm/how-to-use-wsl-development-environment-in-product.html
+- https://stackoverflow-com.translate.goog/questions/51912772/how-to-use-wsl-as-default-terminal-in-webstorm-or-any-other-jetbrains-products?_x_tr_sl=en&_x_tr_tl=ru&_x_tr_hl=ru&_x_tr_pto=sc
