@@ -49,6 +49,11 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 
 > Через 30-60 секунд можно проверить, что sakura работает: http://localhost:4567/test
 
+> (!) Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз
+```sh
+$ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
+```
+
 # Настройка proxy (с хоста)
 
 ## DNS (hosts файл)
@@ -139,8 +144,14 @@ function FindProxyForURL(url, host) {
 Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
 
 ```sh
-$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
+$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
+
+> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
+>
+> Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
+> 
+> (!) После скачивания надо поменять расширение `.download` -> `.lnk`
 
 - Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки.
 - Указываем (в первый раз) `connect.inno.tech` для подключения
@@ -161,13 +172,15 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 
 ### Глобальная настройка под git.sfera.inno.local (рекомендуется)
 
-В `~/.gitconfig` добавляем (на host машине!)
+На host (windows) машине
 
-```
-[http]
-[http "https://git.sfera.inno.local"]
-	proxy = http://inno-proxy:3128
-	sslVerify = false
+```sh
+$ git config --global http."https://git.sfera.inno.local".proxy "http://inno-proxy:3128"
+$ git config --global http."https://git.sfera.inno.local".sslVerify "false"
+
+# для отката
+# $ git config --global --unset http."https://git.sfera.inno.local".proxy
+# $ git config --global --unset http."https://git.sfera.inno.local".sslVerify
 ```
 
 Теперь можем клонировать **по https**
@@ -177,20 +190,26 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 ```sh
 $ git config http.proxy "http://inno-proxy:3128"
 $ git config http.sslVerify "false"
+
+# для отката
+# $ git config --unset http.proxy
+# $ git config --unset http.sslVerify
 ```
 
 ## npm
 
-```sh
-# глобально для нужных реестров пакетов (меняем %REPO_NAME%)
-# UPD: Не работает для реестров, хз почему
-$ npm config set //sfera.inno.local/app/repo-ci-npm/api/repository/%REPO_NAME%/:proxy=http://inno-proxy:3128
+На host (windows) машине
 
-# или указывать глобально для всех пакетов:
+```sh
+# указывать глобально для всех пакетов:
 $ npm config set proxy http://inno-proxy:3128
 
 # или напрямую при командах
 $ npm view lodash --proxy http://inno-proxy:3128
+
+# или глобально для нужных реестров пакетов (меняем %REPO_NAME%)
+# UPD: Не работает для реестров, хз почему
+$ npm config set //sfera.inno.local/app/repo-ci-npm/api/repository/%REPO_NAME%/:proxy=http://inno-proxy:3128
 ```
 
 # Troubleshooting
@@ -232,8 +251,10 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 
 - Подключение VPN
 ```sh
-$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
+$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
+
+> Запускать через ярлык удобнее, см. пример сверху
 
 - Отключение VPN
 
@@ -241,7 +262,21 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 
 - Выключение VPN
 
-"Ctrl + C" в терминале, где подключались
+"Ctrl + C" в терминале, где подключались (если подключались из терминала)
+
+## Запуск Google Chrome в WSL
+
+Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
+
+```sh
+$ wsl -d Ubuntu google-chrome
+```
+
+> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
+>
+> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
+> 
+> (!) После скачивания надо поменять расширение `.download` -> `.lnk`
 
 ## Отключение/перезапуск NAC Сакура
 
@@ -254,14 +289,6 @@ $ wsl -d Ubuntu sudo systemctl restart sakura
 
 # отключить автозапуск сервиса (enable, если нужно вернуть)
 $ wsl -d Ubuntu sudo systemctl disable sakura
-```
-
-## Запуск Google Chrome в WSL
-
-Очень удобно, когда нам нужно открыть стенд/сферу, т.к. у стендов много ip и сложно все добавить в hosts
-
-```sh
-$ wsl -d Ubuntu google-chrome
 ```
 
 ## Работа напрямую из WSL

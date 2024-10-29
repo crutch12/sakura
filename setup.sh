@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ~
+
 # обновление пакетов
 sudo apt-get update -y
 sudo apt-get install -y
