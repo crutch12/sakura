@@ -39,6 +39,8 @@ $ wsl --install Ubuntu
 
 ## Настройка Ubuntu
 
+> (!) **Убедитесь, что все VPN (в т.ч. VPN/proxy расширения в браузере) отключени**
+
 Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
 ```sh
@@ -53,6 +55,8 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 ```sh
 $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 ```
+
+> (!) **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема недоступности домена `achrive.ubuntu.com`**
 
 # Настройка proxy (с хоста)
 
@@ -86,7 +90,7 @@ $ npx -y hostile set 10.234.156.183 "curs-root-ui.dev.curs.apps.innodev.local ap
 
 ## Proxy
 
-Получаем ip адрес виртуальной машины
+### Шаг 1. Получаем ip адрес proxy сервера
 
 ```sh
 # через wsl вызов (берём ip, который слева)
@@ -100,43 +104,53 @@ $ ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
 $ wsl -d Ubuntu ip addr show eth0
 ```
 
-Полученный адрес (например `172.25.203.50`) используем в качестве прокси - `172.25.203.50:3128`
+Полученный адрес (например `172.25.203.50`) добавляем в hosts (`C:\Windows\System32\drivers\etc\hosts`) файл
 
-> (!) **Для удобства, сразу делаем для этого адреса domain имя (через hosts файл)**
 ```
 # hosts файл
 172.25.203.50 inno-proxy
 ```
-**Теперь можно везде указывать `inno-proxy:3128`**
 
-> При перезапуске есть шанс, что адрес поменяется. Тут есть инструкция по автонастройке ip для wsl машины
-> https://gist.github.com/wllmsash/1636b86eed45e4024fb9b7ecd25378ce
+Теперь во всех местах в качестве proxy сервера мы будем указывать `inno-proxy:3128`
 
-### Как использовать прокси
+<details>
+  <summary>Замечания</summary>
 
-1) Самый простой вариант (хотя бы проверить, что работает)
+  > При перезапуске есть шанс, что адрес поменяется. Тут есть инструкция по автонастройке ip для wsl машины
+  > https://gist.github.com/wllmsash/1636b86eed45e4024fb9b7ecd25378ce
+</details>
 
-- Windows - Network & internet > Proxy > Manual proxy setup
-- Указываем `inno-proxy:3128`
+### Шаг 2. Включаем proxy (windows)
 
-2) Или через .pac файл
+#### Вариант 1. Через .pac файл
 
 - Windows - Network & internet > Proxy > Use setup script
 - Указываем URL `https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac`
 
-> Пример PAC файла для настройки proxy (с.м. https://learn.microsoft.com/en-us/previous-versions/troubleshoot/browsers/connectivity-navigation/optimize-pac-performance)
-```js
-function FindProxyForURL(url, host) {
-  if (shExpMatch(host, "sfera.inno.local") || shExpMatch(host, "*.sfera.inno.local")) {
-    // Use the WSL proxy (replace WSL_IP and port with your WSL IP and proxy port)
-    return "PROXY inno-proxy:3128"; // WSL IP and Squid port
+<details>
+  <summary>Про .pac файлы</summary>
+
+  > Пример PAC файла для настройки proxy (с.м. https://learn.microsoft.com/en-us/previous-versions/troubleshoot/browsers/connectivity-navigation/optimize-pac-performance)
+  ```js
+  function FindProxyForURL(url, host) {
+    if (shExpMatch(host, "sfera.inno.local") || shExpMatch(host, "*.sfera.inno.local")) {
+      // Use the WSL proxy (replace WSL_IP and port with your WSL IP and proxy port)
+      return "PROXY inno-proxy:3128"; // WSL IP and Squid port
+    }
+
+    return "DIRECT";
   }
+  ```
+</details>
 
-  return "DIRECT";
-}
-```
+#### Вариант 2. Вручную для всей системы
 
-3) Или настраиваем VPN на wsl машине (например wireguard) и ходим через него (потенциально это намного удобнее, чем страдать с proxy)
+- Windows - Network & internet > Proxy > Manual proxy setup
+- Указываем `inno-proxy:3128`
+
+#### Вариант 3. VPN вместо proxy
+
+Настраиваем VPN на wsl машине (например wireguard) и ходим через него (потенциально это намного удобнее, чем страдать с proxy)
 
 > @TODO
 
@@ -145,33 +159,33 @@ function FindProxyForURL(url, host) {
 Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
 
 ```sh
-$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
+$ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
+
+- Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки
+- Указываем `connect.inno.tech` для подключения
+- Вводим логин/пароль, подключаемся
+- (!) **Не закрываем/останавливаем терминал**, иначе VPN отключится
 
 > Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
 >
 > Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
 > 
-> (!) **После скачивания надо поменять расширение `.download` -> `.lnk`**
+> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
 
-- Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки.
-- Указываем (в первый раз) `connect.inno.tech` для подключения
-- Вводим креды, подключаемся.
-- (!) **Не закрываем/останавливаем терминал**, иначе VPN отключится
+# Настройка инструментов (proxy agent)
 
-# Настройка инструментов
+Теперь наш трафик частично проксируется через wsl виртуальную машину Ubuntu.
 
-Теперь наш трафик проксируется через wsl виртуальную машину Ubuntu.
+Если мы настроили windows proxy, то, например, для Google Chrome/Firefox прокси уже работает, можно проверить: https://sfera.inno.local
 
-Если мы настроили windows proxy, то, например, для Google Chrome прокси уже работает, можно проверить: https://sfera.inno.local
-
-Но многие инструменты (git, npm, ssh, yandex browser, etc.) нужно настраивать вручную
+Но многие инструменты (git, npm, node, ssh, yandex browser, etc.) нужно настраивать вручную
 
 ## git
 
 Получилось настроить только проксирование http/https, так что **НЕ ИСПОЛЬЗУЕМ SSH**
 
-### Глобальная настройка под git.sfera.inno.local (рекомендуется)
+### Глобальная настройка (рекомендуется)
 
 На host (windows) машине
 
@@ -184,11 +198,19 @@ $ git config --global http."https://git.sfera.inno.local".sslVerify "false"
 # $ git config --global --unset http."https://git.sfera.inno.local".sslVerify
 ```
 
-Теперь можем клонировать **по https**
+Теперь репозитории можно клонировать/пушить/пуллить, **но только по https!!!**
+
+<details>
+  <summary>Проблемы с UI клиентами (Unable to access https://git.sfera.inno.local)</summary>
+
+  > Fork и SmartGit по умолчанию используют встроенные `git.exe` клиенты (вместо установленных в системе), из-за этого они могут игнорировать глобальные настройки.
+  > 
+  > **Решение**: в настройках UI клиента поменять "встроенный" клиент на "системный" (обычно это `C:\Program Files\Git\bin\git.exe` или `C:\Program Files\Git\cmd\git.exe`)
+</details>
 
 ### Локальная настройка (не рекомендуется)
 
-Если репа уже склонированна, то можно настроить просто в ней
+Если репа уже склонированна, то можно настроить git внутри репозитория:
 
 ```sh
 $ git config http.proxy "http://inno-proxy:3128"
@@ -217,12 +239,29 @@ $ npm view lodash --proxy http://inno-proxy:3128
 $ npm config set //sfera.inno.local/app/repo-ci-npm/api/repository/%REPO_NAME%/:proxy=http://inno-proxy:3128
 ```
 
+## node
+
+Используем пакет [global-agent](https://www.npmjs.com/package/global-agent)
+
+Устанавливаем
+
+```sh
+$ npm i -D global-agent
+```
+
+Подключаем
+
+```js
+// задаём переменную среды для настройки глобального proxy (например в .env файле)
+// GLOBAL_AGENT_HTTP_PROXY=http://inno-proxy:3128
+
+// @NOTE: Настройка proxy для dev режима (если проксируем трафик до inno сети)
+if (process.env.GLOBAL_AGENT_HTTP_PROXY) {
+  require('global-agent').bootstrap();
+}
+```
+
 # Troubleshooting
-
-### Отключение VPN
-
-1) Нажимаем "Disconnect", ждём
-2) Вместо "крестика" отключаем через "Ctrl + C" в терминале Ubuntu
 
 ### Иногда wsl нужно полностью перезапускать, т.к. впн ломается
 
@@ -246,7 +285,7 @@ $ wsl -d Ubuntu sudo systemctl status squid
 $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 ```
 
-### Нужного адреса нету в hosts
+### Если нужного адреса нету в hosts
 
 1) `$ wsl -d Ubuntu dig +short git.sfera.inno.local`
 2) Добавляем первый результат в hosts
@@ -257,11 +296,17 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 
 ### Подключение VPN
 
+Через терминал
+
 ```sh
 $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
 
-> Запускать через ярлык удобнее, см. пример сверху
+Или через ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (см. пример сверху)
+
+```
+*Клик-клик*
+```
 
 ### Отключение VPN
 
@@ -283,7 +328,7 @@ $ wsl -d Ubuntu google-chrome
 >
 > Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
 > 
-> (!) **После скачивания надо поменять расширение `.download` -> `.lnk`**
+> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
 
 ## Отключение/перезапуск NAC Сакура
 
@@ -298,7 +343,7 @@ $ wsl -d Ubuntu sudo systemctl restart sakura
 $ wsl -d Ubuntu sudo systemctl disable sakura
 ```
 
-## Работа напрямую из WSL
+## Работа с проектом напрямую из WSL (в случаях проблем работы с proxy)
 
 ### Через терминал
 
@@ -310,6 +355,7 @@ $ wsl -d Ubuntu git push
 ```
 
 Npm
+
 ```sh
 # сначала cd в папку с git репой
 $ wsl -d Ubuntu npm i
