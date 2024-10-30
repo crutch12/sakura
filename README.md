@@ -26,6 +26,30 @@ $ wsl --update
 
 На более старых сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
 
+## Настройка WSL (рекомендуется)
+
+1. Открываем файл `%USERPROFILE%\.wslconfig` (`C:\Users\<UserName>\.wslconfig`)
+
+2. Заменяем содержимое, сохраняем:
+```ini
+[wsl2]
+memory=8GB   # Limits VM memory in WSL
+processors=4 # Makes the WSL 2 VM use two virtual processors
+nestedVirtualization=true # Меняем на false в случае ошибки "Nested virtualization is not supported on this machine"
+
+[network]
+generateResolvConf=false # fixes /etc/resolve.conf file
+
+[system-distro-env]
+WESTON_RDP_MONITOR_REFRESH_RATE=60 # changes FPS (https://github.com/microsoft/wslg/wiki/Controlling-WSLg-frame-rate)
+```
+
+3. Применяем настройки `wsl`
+
+```sh
+$ wsl --shutdown
+```
+
 ## Установка wsl Ubuntu (если не установлена)
 
 ```sh
@@ -37,9 +61,9 @@ $ wsl --install Ubuntu
 # во время установки указываем логин/пароль (root/password)
 ```
 
-## Настройка Ubuntu
+## Настройка Ubuntu (установка Sakura, Cisco Anyconnect и т.д.)
 
-> (!) **Убедитесь, что все VPN (в т.ч. VPN/proxy расширения в браузере) отключени**
+> (!) **Убедитесь, что все VPN (в т.ч. VPN/proxy расширения в браузере) отключены**
 
 Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
@@ -56,7 +80,7 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 ```
 
-> (!) **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема недоступности домена `achrive.ubuntu.com`**
+> (!) **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема в недоступности домена `achrive.ubuntu.com`**
 
 # Настройка proxy (с хоста)
 
@@ -125,7 +149,7 @@ $ wsl -d Ubuntu ip addr show eth0
 #### Вариант 1. Через .pac файл
 
 - Windows - Network & internet > Proxy > Use setup script
-- Указываем URL `https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac`
+- Указываем `https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac`
 
 <details>
   <summary>Про .pac файлы</summary>
@@ -154,7 +178,7 @@ $ wsl -d Ubuntu ip addr show eth0
 
 > @TODO
 
-# Запуск Cisco (VPN)
+# Запуск Cisco Anyconnect (VPN)
 
 Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
 
@@ -177,7 +201,7 @@ $ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
 
 Теперь наш трафик частично проксируется через wsl виртуальную машину Ubuntu.
 
-Если мы настроили windows proxy, то, например, для Google Chrome/Firefox прокси уже работает, можно проверить: https://sfera.inno.local
+Если мы настроили windows proxy (и подключили Cisco Anyconnect), то, например, для Google Chrome/Firefox прокси уже работает, можно проверить: https://sfera.inno.local
 
 Но многие инструменты (git, npm, node, ssh, yandex browser, etc.) нужно настраивать вручную
 
