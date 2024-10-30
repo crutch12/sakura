@@ -26,10 +26,14 @@ sudo apt install -y squid
 sudo wget https://github.com/crutch12/sakura/raw/refs/heads/main/squid.conf -O /etc/squid/squid.conf
 sudo systemctl restart squid
 
+# установка node.js (для скрипта hosts.js)
+sudo apt install -y nodejs
+
 # установка Google Chrome (на случай, если не знаем все DNS адреса и хотим просто через браузер посмотреть)
 sudo apt install -y fonts-liberation libnspr4 libnss3 libvulkan1 xdg-utils
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg -i google-chrome-stable_current_amd64.deb
+
 
 # Готово
 echo "Sakura, Squid and Cisco Anyconnect setup complete!!!"

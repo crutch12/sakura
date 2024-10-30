@@ -7,7 +7,8 @@ Windows: WSL (Ubuntu) + Sakura + Cisco Anyconnect
 # Проблема и решение
 
 - Проблема: для работы с inno.local нужно поставить NAC Сакура (которая имеет много доступа к системе)
-- Решение: поднимаем WSL (linux внутри windows), туда устанавливаем NAC Сакура и Cisco Anyconnect, настраиваем проксирование трафика через WSL
+- Решение: поднимаем WSL (linux внутри windows), туда устанавливаем NAC Сакура и Cisco Anyconnect
+  - Дополнительно: настраиваем проксирование трафика с host (windows) машины через WSL
 
 # WSL
 
@@ -24,9 +25,9 @@ $ wsl --set-default-version 2
 $ wsl --update
 ```
 
-На более старых сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
+На более старых windows сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
 
-## Настройка WSL (рекомендуется)
+## Настройка WSL (крайне рекомендуется)
 
 1. Открываем файл `%USERPROFILE%\.wslconfig` (`C:\Users\<UserName>\.wslconfig`)
 
@@ -84,61 +85,105 @@ $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 
 # Настройка proxy (с хоста)
 
+Этот этап можно полностью пропустить в случаях:
+
+- если вам для работы достаточно браузера (Google Chrome через WSL, пример запуска браузера в пункте "Запуск Google Chrome в WSL")
+- или если вы будете работать исключительно через WSL (пример в пункте "Работа с проектом напрямую из WSL")
+
+В таком случае переходим к пункту "Запуск Cisco Anyconnect"
+
 ## DNS (hosts файл)
 
-Меняем файл (открываем от админа) `C:\Windows\System32\drivers\etc\hosts`
-```
-10.169.6.196 sfera.inno.local
-10.169.7.247 git.sfera.inno.local
-10.169.7.215 repo-ci.sfera.inno.local
-10.169.7.215 npm.repo-ci.sfera.inno.local
-10.234.156.183 curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local
-# ...список ещё будет пополняться...
+### Шаг 1. Генерируем содержимое hosts файла
+
+- Выполняем команды
+
+```sh
+# сначала качаем скрипт
+$ wsl -d Ubuntu wget https://github.com/crutch12/sakura/raw/refs/heads/main/hosts.js -O ~/hosts.js
+
+# теперь выполняем скрипт. В ответ получим содержимое для hosts файла
+$ wsl -d Ubuntu node ~/hosts.js
 ```
 
-> Если встретили неизвестный домен, то можно получить его ip. Пример:
+- Копируем результат вывода второй команды
+
+### Шаг 2. Меняем файл hosts (открываем от админа)
+
+- Открываем файл `C:\Windows\System32\drivers\etc\hosts`
+- Вставляем результат вывода с предыдущего шага
+
+Пример
+
+```
+172.25.203.50 inno-proxy
+10.169.6.196 sfera.inno.local
+10.169.7.247 git.sfera.inno.local
+10.169.7.215 repo-ci.sfera.inno.local npm.repo-ci.sfera.inno.local
+10.234.156.162 curs-root-ui.dev.curs.apps.innodev.local
+10.234.156.183 api-gw.dev.curs.apps.innodev.local
+```
+
+### Настройка неизвестных адресов
+
+> Если по мере работы с сервисами встретили неизвестный домен, то можно получить его ip. Пример:
 ```sh
 $ wsl -d Ubuntu dig +short git.sfera.inno.local
 ```
 
-### Или меняем hosts через npm (мне так удобнее)
+<details>
+  <summary>Подготовка hosts значений вручную</summary>
 
-```sh
-# запускать через admin powershell
-$ npx -y hostile set 10.169.6.196 sfera.inno.local
-$ npx -y hostile set 10.169.7.247 git.sfera.inno.local
-$ npx -y hostile set 10.169.7.215 repo-ci.sfera.inno.local
-$ npx -y hostile set 10.169.7.215 npm.repo-ci.sfera.inno.local
-$ npx -y hostile set 10.234.156.183 "curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local"
-```
+  ```
+  10.169.6.196 sfera.inno.local
+  10.169.7.247 git.sfera.inno.local
+  10.169.7.215 repo-ci.sfera.inno.local
+  10.169.7.215 npm.repo-ci.sfera.inno.local
+  10.234.156.183 curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local
+  # ...список ещё будет пополняться...
+  ```
+
+  ### Или меняем hosts через npm (мне так удобнее)
+
+  ```sh
+  # запускать через admin powershell
+  $ npx -y hostile set 10.169.6.196 sfera.inno.local
+  $ npx -y hostile set 10.169.7.247 git.sfera.inno.local
+  $ npx -y hostile set 10.169.7.215 repo-ci.sfera.inno.local
+  $ npx -y hostile set 10.169.7.215 npm.repo-ci.sfera.inno.local
+  $ npx -y hostile set 10.234.156.183 "curs-root-ui.dev.curs.apps.innodev.local api-gw.dev.curs.apps.innodev.local"
+  ```
+</details>
 
 ## Proxy
 
 ### Шаг 1. Получаем ip адрес proxy сервера
 
-```sh
-# через wsl вызов (берём ip, который слева)
-$ wsl -d Ubuntu hostname -I
-
-# или через wsl машину
-$ wsl -d Ubuntu
-$ ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
-
-# или через wsl машину в одну команду, но без grep
-$ wsl -d Ubuntu ip addr show eth0
-```
-
-Полученный адрес (например `172.25.203.50`) добавляем в hosts (`C:\Windows\System32\drivers\etc\hosts`) файл
-
-```
-# hosts файл
-172.25.203.50 inno-proxy
-```
-
-Теперь во всех местах в качестве proxy сервера мы будем указывать `inno-proxy:3128`
+> (!) **Если на предыдущем этапе в hosts файл уже указали inno-proxy хост, то переходим сразу к Шаг 2.**
 
 <details>
-  <summary>Замечания</summary>
+  <summary>Ручная настройка hosts</summary>
+
+  ```sh
+  # через wsl вызов (берём ip, который слева)
+  $ wsl -d Ubuntu hostname -I
+
+  # или через wsl машину
+  $ wsl -d Ubuntu
+  $ ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+
+  # или через wsl машину в одну команду, но без grep
+  $ wsl -d Ubuntu ip addr show eth0
+  ```
+
+  Полученный адрес (например `172.25.203.50`) добавляем в hosts (`C:\Windows\System32\drivers\etc\hosts`) файл
+
+  ```
+  # hosts файл
+  172.25.203.50 inno-proxy
+  ```
+
+  Теперь во всех местах в качестве proxy сервера мы будем указывать `inno-proxy:3128`
 
   > При перезапуске есть шанс, что адрес поменяется. Тут есть инструкция по автонастройке ip для wsl машины
   > https://gist.github.com/wllmsash/1636b86eed45e4024fb9b7ecd25378ce
@@ -167,7 +212,7 @@ $ wsl -d Ubuntu ip addr show eth0
   ```
 </details>
 
-#### Вариант 2. Вручную для всей системы
+#### Вариант 2. Вручную для всех доменов
 
 - Windows - Network & internet > Proxy > Manual proxy setup
 - Указываем `inno-proxy:3128`
@@ -197,7 +242,25 @@ $ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
 > 
 > (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
 
-# Настройка инструментов (proxy agent)
+Теперь можем проверить, что VPN работает (пункт "Запуск Google Chrome в WSL")
+
+## Запуск Google Chrome в WSL
+
+Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
+
+```sh
+$ wsl -d Ubuntu google-chrome
+```
+
+> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
+>
+> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
+> 
+> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+
+# Настройка инструментов для работы с proxy (proxy agent)
+
+> (!) **Если нам не нужен proxy, то сразу переходим к финальному пункту "Итог и процесс работы"**
 
 Теперь наш трафик частично проксируется через wsl виртуальную машину Ubuntu.
 
@@ -314,9 +377,18 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 1) `$ wsl -d Ubuntu dig +short git.sfera.inno.local`
 2) Добавляем первый результат в hosts
 
+### Если на диске C: не хватает места под машины wsl
+
+Переносим хранение машин wsl на диск D:
+
+- https://github.com/pxlrbt/move-wsl
+  - Важное замечание при копировании Docker виртуалки: https://github.com/pxlrbt/move-wsl/issues/14#issuecomment-1246050916
+
 # Итог и процесс работы
 
 После всех настроек, остаётся только подключать/отключать VPN
+
+## Cisco Annyconnect
 
 ### Подключение VPN
 
@@ -340,21 +412,9 @@ $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 
 - "Ctrl + C" в терминале, где подключались
 
-## Запуск Google Chrome в WSL
+## NAC Сакура
 
-Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
-
-```sh
-$ wsl -d Ubuntu google-chrome
-```
-
-> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
->
-> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
-> 
-> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
-
-## Отключение/перезапуск NAC Сакура
+### Отключение/перезапуск NAC Сакура
 
 ```sh
 # отключить запущенный сервис 
@@ -367,7 +427,7 @@ $ wsl -d Ubuntu sudo systemctl restart sakura
 $ wsl -d Ubuntu sudo systemctl disable sakura
 ```
 
-## Работа с проектом напрямую из WSL (в случаях проблем работы с proxy)
+## Работа с проектом напрямую из WSL (если не нужен/не работает proxy)
 
 ### Через терминал
 
