@@ -1,22 +1,29 @@
 Windows: WSL (Ubuntu) + Sakura + Cisco Anyconnect
 
+> [!NOTE]
 > Проверялось на версиях Ubuntu
 > - ubuntu:20.04
 > - ubuntu:22.04
 
 # Проблема и решение
 
-- Проблема: для работы с inno.local нужно поставить NAC Сакура (которая имеет много доступа к системе)
-- Решение: поднимаем WSL (linux внутри windows), туда устанавливаем NAC Сакура и Cisco Anyconnect
-  - Дополнительно: настраиваем проксирование трафика с host (windows) машины через WSL
+### Проблема
+
+- для работы с inno.local нужно поставить NAC Сакура (которая имеет много доступа к системе)
+
+### Решение
+
+- поднимаем WSL (linux внутри windows), туда устанавливаем NAC Сакура и Cisco Anyconnect
+  - (дополнительно) настраиваем проксирование трафика с host (windows) машины через WSL
 
 # WSL
 
-Всё от админа (наверное)
+Все команды выполняются от админа (наверное)
 
 ## Установка WSL (если не установлен)
 
-> **Обязательно WSL версии 2!**
+> [!IMPORTANT]
+> **Обязательно используем WSL версии 2!**
 
 Для windows 10/11 сборка 19041 и выше
 
@@ -25,7 +32,7 @@ $ wsl --set-default-version 2
 $ wsl --update
 ```
 
-На более старых windows сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual)
+На более старых windows сборках: https://learn.microsoft.com/ru-ru/windows/wsl/install-manual
 
 ## Настройка WSL (крайне рекомендуется)
 
@@ -64,7 +71,8 @@ $ wsl --install Ubuntu
 
 ## Настройка Ubuntu (установка Sakura, Cisco Anyconnect и т.д.)
 
-> (!) **Убедитесь, что все VPN (в т.ч. VPN/proxy расширения в браузере) отключены**
+> [!IMPORTANT]
+> **Убедитесь, что все VPN (в т.ч. VPN/proxy расширения в браузере) отключены**
 
 Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
@@ -72,27 +80,35 @@ $ wsl --install Ubuntu
 $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
 ```
 
-> Не останавливаем до сообщения "Sakura, Squid and Cisco Anyconnect setup complete!!!"
+> [!NOTE]
+> - Не останавливаем до сообщения **"Sakura, Squid and Cisco Anyconnect setup complete!!!"**
+> - Через 30-60 секунд можно проверить, что Sakura работает: http://localhost:4567/test
 
-> Через 30-60 секунд можно проверить, что sakura работает: http://localhost:4567/test
+> [!WARNING]
+> **Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз**
+> ```sh
+> $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
+> ```
 
-> (!) **Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз**
-```sh
-$ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
-```
-
-> (!) **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема в недоступности домена `achrive.ubuntu.com`**
+> [!WARNING]
+> **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема в недоступности домена `achrive.ubuntu.com`**
 
 # Настройка proxy (с хоста)
 
-Этот этап можно полностью пропустить в случаях:
-
-- если вам для работы достаточно браузера (Google Chrome через WSL, пример запуска браузера в пункте "Запуск Google Chrome в WSL")
-- или если вы будете работать исключительно через WSL (пример в пункте "Работа с проектом напрямую из WSL")
-
-В таком случае переходим к пункту "Запуск Cisco Anyconnect"
+> [!NOTE]
+> Этот этап можно полностью пропустить в случаях:
+> 
+> - если вам для работы достаточно браузера (Google Chrome через WSL, пример запуска браузера в пункте "Запуск Google Chrome в WSL")
+> - или если вы будете работать исключительно через WSL (пример в пункте "Работа с проектом напрямую из WSL")
+> 
+> В таком случае переходим к пункту "Запуск Cisco Anyconnect"
 
 ## DNS (hosts файл)
+
+> [!CAUTION]
+> Если в будущем у используемых хостов (например sfera.inno.local) поменяется ip адрес, то нужно повторить этот пункт
+>
+> **Так же этот пункт нужно повторять после Отключения Check Point Mobile, т.к. он затирает hosts файл**
 
 ### Шаг 1. Генерируем содержимое hosts файла
 
@@ -159,7 +175,8 @@ $ wsl -d Ubuntu dig +short git.sfera.inno.local
 
 ### Шаг 1. Получаем ip адрес proxy сервера
 
-> (!) **Если на предыдущем этапе в hosts файл уже указали inno-proxy хост, то переходим сразу к Шаг 2.**
+> [!TIP]
+> **Если на предыдущем этапе в hosts файл уже указали inno-proxy хост, то переходим сразу к Шаг 2.**
 
 <details>
   <summary>Ручная настройка hosts</summary>
@@ -234,13 +251,14 @@ $ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
 - Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки
 - Указываем `connect.inno.tech` для подключения
 - Вводим логин/пароль, подключаемся
-- (!) **Не закрываем/останавливаем терминал**, иначе VPN отключится
+  - **Не закрываем/останавливаем терминал**, иначе VPN отключится
 
+> [!TIP]
 > Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
 >
 > Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
 > 
-> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
 
 Теперь можем проверить, что VPN работает (пункт "Запуск Google Chrome в WSL")
 
@@ -252,15 +270,17 @@ $ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
 $ wsl -d Ubuntu google-chrome
 ```
 
+> [!TIP]
 > Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
 >
 > Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
 > 
-> (!) **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
 
 # Настройка инструментов для работы с proxy (proxy agent)
 
-> (!) **Если нам не нужен proxy, то сразу переходим к финальному пункту "Итог и процесс работы"**
+> [!TIP]
+> **Если нам не нужен proxy, то сразу переходим к финальному пункту "Итог и процесс работы"**
 
 Теперь наш трафик частично проксируется через wsl виртуальную машину Ubuntu.
 
@@ -392,16 +412,16 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 
 ### Подключение VPN
 
-Через терминал
-
-```sh
-$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
-```
-
-Или через ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (см. пример сверху)
+Через ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (см. пункт "Запуск Cisco Anyconnect (VPN)")
 
 ```
 *Клик-клик*
+```
+
+Или через терминал
+
+```sh
+$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
 
 ### Отключение VPN
@@ -411,6 +431,10 @@ $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ### Остановка процесса с VPN (если подключались из терминала)
 
 - "Ctrl + C" в терминале, где подключались
+
+## Google Chrome (WSL)
+
+См. пункт "Запуск Google Chrome в WSL"
 
 ## NAC Сакура
 

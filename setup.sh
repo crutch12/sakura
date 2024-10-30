@@ -7,6 +7,7 @@ sudo apt-get update -y
 sudo apt-get install -y
 
 # установка sakura
+sudo apt install -y libusb-1.0-0
 curl -sLO https://github.com/crutch12/sakura/raw/refs/heads/main/sakura-agent-2.33.5.deb
 sudo dpkg -i sakura-agent-2.33.5.deb
 sudo systemctl enable sakura
@@ -17,6 +18,8 @@ sudo apt install -y unzip
 curl -sLO https://github.com/crutch12/sakura/raw/refs/heads/main/anyconnect-linux64-4.10.01075.zip
 unzip anyconnect-linux64-4.10.01075.zip -d "anyconnect-linux64-4.10.01075"
 cd ./anyconnect-linux64-4.10.01075/anyconnect-linux64-4.10.01075/vpn && yes | sudo bash ./vpn_install.sh
+
+cd ~
 
 # установка gui зависимостей для работы cisco anyconnect
 sudo apt install -y libgtk-3-0 libwebkit2gtk-4.0-37
@@ -29,11 +32,10 @@ sudo systemctl restart squid
 # установка node.js (для скрипта hosts.js)
 sudo apt install -y nodejs
 
-# установка Google Chrome (на случай, если не знаем все DNS адреса и хотим просто через браузер посмотреть)
+# установка Google Chrome (на случай, если не нужно проксирование и/или не знаем все DNS адреса и хотим просто через браузер посмотреть)
 sudo apt install -y fonts-liberation libnspr4 libnss3 libvulkan1 xdg-utils
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg -i google-chrome-stable_current_amd64.deb
-
 
 # Готово
 echo "Sakura, Squid and Cisco Anyconnect setup complete!!!"
