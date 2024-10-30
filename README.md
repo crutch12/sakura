@@ -49,7 +49,7 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 
 > Через 30-60 секунд можно проверить, что sakura работает: http://localhost:4567/test
 
-> (!) Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз
+> (!) **Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз**
 ```sh
 $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 ```
@@ -58,7 +58,7 @@ $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 
 ## DNS (hosts файл)
 
-Меняем файл (открываем от админа) C:\Windows\System32\drivers\etc\hosts
+Меняем файл (открываем от админа) `C:\Windows\System32\drivers\etc\hosts`
 ```
 10.169.6.196 sfera.inno.local
 10.169.7.247 git.sfera.inno.local
@@ -102,7 +102,7 @@ $ wsl -d Ubuntu ip addr show eth0
 
 Полученный адрес (например `172.25.203.50`) используем в качестве прокси - `172.25.203.50:3128`
 
-> (!) Для удобства, сразу делаем для этого адреса domain имя (через hosts файл)
+> (!) **Для удобства, сразу делаем для этого адреса domain имя (через hosts файл)**
 ```
 # hosts файл
 172.25.203.50 inno-proxy
@@ -116,16 +116,15 @@ $ wsl -d Ubuntu ip addr show eth0
 
 1) Самый простой вариант (хотя бы проверить, что работает)
 
-Windows - Network & internet > Proxy > Manual proxy setup
-
-Указываем `inno-proxy:3128`
+- Windows - Network & internet > Proxy > Manual proxy setup
+- Указываем `inno-proxy:3128`
 
 2) Или через .pac файл
 
-Windows - Network & internet > Proxy > Use setup script > Указываем URL до .pac файла (например `https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac`)
+- Windows - Network & internet > Proxy > Use setup script
+- Указываем URL `https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac`
 
-Пример PAC файла для настройки proxy (с.м. https://learn.microsoft.com/en-us/previous-versions/troubleshoot/browsers/connectivity-navigation/optimize-pac-performance)
-
+> Пример PAC файла для настройки proxy (с.м. https://learn.microsoft.com/en-us/previous-versions/troubleshoot/browsers/connectivity-navigation/optimize-pac-performance)
 ```js
 function FindProxyForURL(url, host) {
   if (shExpMatch(host, "sfera.inno.local") || shExpMatch(host, "*.sfera.inno.local")) {
@@ -137,7 +136,9 @@ function FindProxyForURL(url, host) {
 }
 ```
 
-> (!) .pac файл должен быть доступен по http, например https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/proxy.pac
+3) Или настраиваем VPN на wsl машине (например wireguard) и ходим через него (потенциально это намного удобнее, чем страдать с proxy)
+
+> @TODO
 
 # Запуск Cisco (VPN)
 
@@ -151,12 +152,12 @@ $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 >
 > Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
 > 
-> (!) После скачивания надо поменять расширение `.download` -> `.lnk`
+> (!) **После скачивания надо поменять расширение `.download` -> `.lnk`**
 
 - Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки.
 - Указываем (в первый раз) `connect.inno.tech` для подключения
 - Вводим креды, подключаемся.
-- (!) **Не закрываем/останавливаем терминал**, иначе vpn отключится
+- (!) **Не закрываем/останавливаем терминал**, иначе VPN отключится
 
 # Настройка инструментов
 
@@ -168,7 +169,7 @@ $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 
 ## git
 
-**Получилось настроить только проксирование http/https, так что НЕ используем ssh**
+Получилось настроить только проксирование http/https, так что **НЕ ИСПОЛЬЗУЕМ SSH**
 
 ### Глобальная настройка под git.sfera.inno.local (рекомендуется)
 
@@ -185,7 +186,9 @@ $ git config --global http."https://git.sfera.inno.local".sslVerify "false"
 
 Теперь можем клонировать **по https**
 
-### Локальная настройка, если репа уже склонированна, то можно настроить просто в ней (не рекомендуется)
+### Локальная настройка (не рекомендуется)
+
+Если репа уже склонированна, то можно настроить просто в ней
 
 ```sh
 $ git config http.proxy "http://inno-proxy:3128"
@@ -203,6 +206,8 @@ $ git config http.sslVerify "false"
 ```sh
 # указывать глобально для всех пакетов:
 $ npm config set proxy http://inno-proxy:3128
+# для откака
+# $ npm config delete proxy
 
 # или напрямую при командах
 $ npm view lodash --proxy http://inno-proxy:3128
@@ -214,12 +219,12 @@ $ npm config set //sfera.inno.local/app/repo-ci-npm/api/repository/%REPO_NAME%/:
 
 # Troubleshooting
 
-- Отключение VPN
+### Отключение VPN
 
 1) Нажимаем "Disconnect", ждём
 2) Вместо "крестика" отключаем через "Ctrl + C" в терминале Ubuntu
 
-- Иногда wsl нужно полностью перезапускать, т.к. впн ломается
+### Иногда wsl нужно полностью перезапускать, т.к. впн ломается
 
 ```sh
 # выкл
@@ -231,7 +236,7 @@ $ wsl -d Ubuntu
 $ wsl --shutdown
 ```
 
-- Проверка работы squid proxy (внутри Ubuntu)
+### Проверка работы squid proxy (внутри Ubuntu)
 
 ```sh
 # статус
@@ -241,28 +246,30 @@ $ wsl -d Ubuntu sudo systemctl status squid
 $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 ```
 
-- Нужного адреса нету в hosts
+### Нужного адреса нету в hosts
+
 1) `$ wsl -d Ubuntu dig +short git.sfera.inno.local`
 2) Добавляем первый результат в hosts
 
 # Итог и процесс работы
 
-**После всех настроек, остаётся только подключать/отключать vpn**
+После всех настроек, остаётся только подключать/отключать VPN
 
-- Подключение VPN
+### Подключение VPN
+
 ```sh
 $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 ```
 
 > Запускать через ярлык удобнее, см. пример сверху
 
-- Отключение VPN
+### Отключение VPN
 
-Кнопка "Disconnect"
+- Кнопка "Disconnect"
 
-- Выключение VPN
+### Остановка процесса с VPN (если подключались из терминала)
 
-"Ctrl + C" в терминале, где подключались (если подключались из терминала)
+- "Ctrl + C" в терминале, где подключались
 
 ## Запуск Google Chrome в WSL
 
@@ -276,7 +283,7 @@ $ wsl -d Ubuntu google-chrome
 >
 > Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
 > 
-> (!) После скачивания надо поменять расширение `.download` -> `.lnk`
+> (!) **После скачивания надо поменять расширение `.download` -> `.lnk`**
 
 ## Отключение/перезапуск NAC Сакура
 
