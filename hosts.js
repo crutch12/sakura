@@ -11,6 +11,8 @@ const DEFAULT_HOSTNAMES = [
   'git.sfera.inno.local',
   'repo-ci.sfera.inno.local',
   'npm.repo-ci.sfera.inno.local',
+  'docker.repo-ci.sfera.inno.local',
+  'maven.repo-ci.sfera.inno.local',
 
   // CURS stands
   'curs-root-ui.dev.curs.apps.innodev.local',
@@ -28,10 +30,10 @@ const getHostnames = async () => {
 
   const hostnames = text.split('\n')
     .map(x => x.trim())
-    .filter(x => !x.startsWith('#'))
-    .filter(x => !x.startsWith('//'))
-    .filter(x => !x.startsWith(';'))
-    .map(x => x.replace(/["'\[\]]/g, ''))
+    .map(x => x.replace(/#.*/, '')) // remove comments - #
+    .map(x => x.replace(/\/\/.*/, '')) // remove comments - //
+    .map(x => x.replace(/;.*/, '')) // remove comments - ;
+    .map(x => x.replace(/[,"'\[\]\(\)\{\}]/g, '')) // remove extra symbols - ,"'[](){}
     .map(x => x.trim())
     .filter(Boolean)
 
