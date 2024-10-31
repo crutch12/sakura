@@ -58,7 +58,7 @@ WESTON_RDP_MONITOR_REFRESH_RATE=60 # changes FPS (https://github.com/microsoft/w
 $ wsl --shutdown
 ```
 
-## Установка wsl Ubuntu (если не установлена)
+## Установка Ubuntu (если не установлена)
 
 ```sh
 # полный список образов
@@ -68,6 +68,12 @@ $ wsl -l -o
 $ wsl --install Ubuntu
 # во время установки указываем логин/пароль (root/password)
 ```
+
+> [!NOTE]
+> Если вы установили другой образ (например `Ubuntu-20.04`), то все последующие команды должны начинаться так:
+> ```sh
+> $ wsl -d Ubuntu-20.04
+> ```
 
 ## Настройка Ubuntu (установка Sakura, Cisco Anyconnect и т.д.)
 
@@ -93,36 +99,95 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/c
 > [!WARNING]
 > **Если виснет на установке пакетов, то попробуйте включить зарубежный VPN, возможно проблема в недоступности домена `achrive.ubuntu.com`**
 
+> [!WARNING]
+> Если ничего не помогло
+> - перезапустите ПК
+> - перепроверьте, что все VPN выключены
+
+# Запуск Cisco Anyconnect (VPN)
+
+Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
+
+```sh
+$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
+```
+
+- Открываем настройки (жмём на шестерёнку)
+  - отключаем **Block connections to untrasted servers**
+  - отключаем **Minimize AnyConnect on VPN connect**
+  - закрываем настройки
+- Указываем `connect.inno.tech` для подключения
+- Вводим логин/пароль, подключаемся
+  - **Не закрываем/останавливаем терминал**, иначе VPN отключится
+
+> [!TIP]
+> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
+>
+> Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
+> 
+> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+
+Теперь можем проверить, что VPN работает (пункт [Запуск Google Chrome в WSL](#запуск-google-chrome-в-wsl))
+
+## Запуск Google Chrome в WSL
+
+Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
+
+```sh
+$ wsl -d Ubuntu google-chrome
+```
+
+> [!TIP]
+> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
+>
+> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
+> 
+> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+
 # Настройка proxy (с хоста)
 
 > [!NOTE]
 > Этот этап можно полностью пропустить в случаях:
 > 
-> - если вам для работы достаточно браузера (Google Chrome через WSL, пример запуска браузера в пункте "Запуск Google Chrome в WSL")
-> - или если вы будете работать исключительно через WSL (пример в пункте "Работа с проектом напрямую из WSL")
+> - если вам для работы достаточно браузера (Google Chrome через WSL, пример запуска браузера в пункте [Запуск Google Chrome в WSL](#запуск-google-chrome-в-wsl))
+> - или если вы будете работать исключительно через WSL (пример в пункте [Работа с проектом напрямую из WSL](#работа-с-проектом-напрямую-из-wsl))
 > 
-> В таком случае переходим к пункту "Запуск Cisco Anyconnect"
+> В таком случае переходим к пункту [Итог и процесс работы](#итог-и-процесс-работы)
 
 ## DNS (hosts файл)
 
 > [!CAUTION]
-> Если в будущем у используемых хостов (например sfera.inno.local) поменяется ip адрес, то нужно повторить этот пункт
->
-> **Так же этот пункт нужно повторять после Отключения Check Point Mobile, т.к. он затирает hosts файл**
+> - все команды выполняем с включённым Cisco Anyconnect
+> - если в будущем у используемых хостов (например sfera.inno.local) поменяется ip адрес, то нужно повторить этот пункт
+> - **так же этот пункт нужно повторять после Отключения Check Point Mobile, т.к. он затирает hosts файл**
 
 ### Шаг 1. Генерируем содержимое hosts файла
 
 - Выполняем команды
 
 ```sh
-# сначала качаем скрипт
-$ wsl -d Ubuntu wget https://github.com/crutch12/sakura/raw/refs/heads/main/hosts.js -O ~/hosts.js
+# сначала качаем список известных доменов (дальше его можно отредактировать руками)
+$ wsl -d Ubuntu wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/inno_hostnames.txt -O ~/inno_hostnames.txt
+
+# теперь качаем скрипт
+$ wsl -d Ubuntu wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/hosts.js -O ~/hosts.js
 
 # теперь выполняем скрипт. В ответ получим содержимое для hosts файла
 $ wsl -d Ubuntu node ~/hosts.js
 ```
 
 - Копируем результат вывода второй команды
+
+> [!NOTE]
+> Если ваш список доменов отличается, то перед запуском скрипта его можно обновить вручную
+>
+> ```sh
+> # редактируем (и сохраняем) inno_hostnames.txt список
+> $ wsl -d Ubuntu nano ~/inno_hostnames.txt
+> 
+> # ещё раз запускаем скрипт и копируем результат
+> $ wsl -d Ubuntu node ~/hosts.js
+> ```
 
 ### Шаг 2. Меняем файл hosts (открываем от админа)
 
@@ -140,12 +205,16 @@ $ wsl -d Ubuntu node ~/hosts.js
 10.234.156.183 api-gw.dev.curs.apps.innodev.local
 ```
 
-### Настройка неизвестных адресов
+### Настройка неизвестных адресов (вручную)
 
-> Если по мере работы с сервисами встретили неизвестный домен, то можно получить его ip. Пример:
+Если по мере работы с сервисами встретили неизвестный домен, то можно получить его ip вручную. Пример:
+
 ```sh
 $ wsl -d Ubuntu dig +short git.sfera.inno.local
 ```
+
+> [!WARNING]
+> Вместо ручного добавления новых ip рекомендуется получать список `hosts` через редактирование `inno_hostnames.txt` файла и перезапуск `hosts.js` скрипта (см. замечание в  [Шаг 1.](#шаг-1-генерируем-содержимое-hosts-файла))
 
 <details>
   <summary>Подготовка hosts значений вручную</summary>
@@ -176,7 +245,7 @@ $ wsl -d Ubuntu dig +short git.sfera.inno.local
 ### Шаг 1. Получаем ip адрес proxy сервера
 
 > [!TIP]
-> **Если на предыдущем этапе в hosts файл уже указали inno-proxy хост, то переходим сразу к Шаг 2.**
+> **Если на предыдущем этапе в hosts файл уже указали `inno-proxy` хост, то переходим сразу к Шаг 2.**
 
 <details>
   <summary>Ручная настройка hosts</summary>
@@ -240,47 +309,7 @@ $ wsl -d Ubuntu dig +short git.sfera.inno.local
 
 > @TODO
 
-# Запуск Cisco Anyconnect (VPN)
-
-Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
-
-```sh
-$ wsl -d sudo Ubuntu /opt/cisco/anyconnect/bin/vpnui
-```
-
-- Сразу жмём на шестерёнку - **Снимаем галки** "Block connections to untrasted servers" и "Minimize AnyConnect on VPN connect", закрываем настройки
-- Указываем `connect.inno.tech` для подключения
-- Вводим логин/пароль, подключаемся
-  - **Не закрываем/останавливаем терминал**, иначе VPN отключится
-
-> [!TIP]
-> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
->
-> Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
-> 
-> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
-
-Теперь можем проверить, что VPN работает (пункт "Запуск Google Chrome в WSL")
-
-## Запуск Google Chrome в WSL
-
-Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
-
-```sh
-$ wsl -d Ubuntu google-chrome
-```
-
-> [!TIP]
-> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
->
-> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
-> 
-> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
-
 # Настройка инструментов для работы с proxy (proxy agent)
-
-> [!TIP]
-> **Если нам не нужен proxy, то сразу переходим к финальному пункту "Итог и процесс работы"**
 
 Теперь наш трафик частично проксируется через wsl виртуальную машину Ubuntu.
 
@@ -341,12 +370,20 @@ $ npm config set proxy http://inno-proxy:3128
 # или напрямую при командах
 $ npm view lodash --proxy http://inno-proxy:3128
 
+# или через .npmrc файл (в проекте)
+# # ./npmrc
+# proxy=http://inno-proxy:3128
+
 # или глобально для нужных реестров пакетов (меняем %REPO_NAME%)
-# UPD: Не работает для реестров, хз почему
+# UPD: Не работает, хз почему
 $ npm config set //sfera.inno.local/app/repo-ci-npm/api/repository/%REPO_NAME%/:proxy=http://inno-proxy:3128
 ```
 
-## node
+> [!WARNING]
+> В некоторых (непонятных) обстоятельствах опция `npm config proxy` влияет на работу `node.js`.
+> Поэтому рекомендуется **отключать настройку `npm config proxy`** при работе с другими `node.js` проектами.
+
+## node.js
 
 Используем пакет [global-agent](https://www.npmjs.com/package/global-agent)
 
@@ -412,7 +449,7 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 
 ### Подключение VPN
 
-Через ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (см. пункт "Запуск Cisco Anyconnect (VPN)")
+Через ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (см. пункт [Запуск Cisco Anyconnect (VPN)](#запуск-cisco-anyconnect-vpn))
 
 ```
 *Клик-клик*
@@ -421,7 +458,7 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 Или через терминал
 
 ```sh
-$ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
+$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 ```
 
 ### Отключение VPN
@@ -434,7 +471,7 @@ $ wsl -d Ubuntu /opt/cisco/anyconnect/bin/vpnui
 
 ## Google Chrome (WSL)
 
-См. пункт "Запуск Google Chrome в WSL"
+См. пункт [Запуск Google Chrome в WSL](#запуск-google-chrome-в-wsl)
 
 ## NAC Сакура
 
@@ -451,7 +488,10 @@ $ wsl -d Ubuntu sudo systemctl restart sakura
 $ wsl -d Ubuntu sudo systemctl disable sakura
 ```
 
-## Работа с проектом напрямую из WSL (если не нужен/не работает proxy)
+## Работа с проектом напрямую из WSL
+
+> [!NOTE]
+> Если не нужен/не работает proxy
 
 ### Через терминал
 

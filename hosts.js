@@ -1,23 +1,44 @@
 const dns = require('node:dns/promises');
 const os = require('node:os');
+const fs = require('node:fs/promises');
+const path = require('node:path');
 
 const INNO_PROXY_HOST = 'inno-proxy'
 
-const hosts = [
+const DEFAULT_HOSTNAMES = [
   // sfera
   'sfera.inno.local',
   'git.sfera.inno.local',
   'repo-ci.sfera.inno.local',
   'npm.repo-ci.sfera.inno.local',
 
-  // stands
+  // CURS stands
   'curs-root-ui.dev.curs.apps.innodev.local',
   'api-gw.dev.curs.apps.innodev.local'
 ]
 
 const options = { family: 4 };
 
-const generate = async (hosts) => {
+const getHostnames = async () => {
+  const text = await fs.readFile(path.resolve(__dirname, './inno_hostnames.txt'), 'utf8').catch(() => undefined)
+
+  if (typeof text === 'undefined') {
+    return DEFAULT_HOSTNAMES
+  }
+
+  const hostnames = text.split('\n')
+    .map(x => x.trim())
+    .filter(x => !x.startsWith('#'))
+    .filter(x => !x.startsWith('//'))
+    .filter(x => !x.startsWith(';'))
+    .map(x => x.replace(/["'\[\]]/g, ''))
+    .map(x => x.trim())
+    .filter(Boolean)
+
+  return hostnames
+}
+
+const generate = async () => {
   const { address: eth0Address } = os.networkInterfaces().eth0 && os.networkInterfaces().eth0.find(x => x.family === 'IPv4') || {}
 
   const values = []
@@ -26,7 +47,9 @@ const generate = async (hosts) => {
     values.push({ host: INNO_PROXY_HOST, address: eth0Address })
   }
 
-  for (const host of hosts) {
+  const hostnames = await getHostnames()
+
+  for (const host of hostnames) {
     const { address } = await dns.lookup(host, options)
     values.push({ host, address })
   }
@@ -44,4 +67,4 @@ const generate = async (hosts) => {
   return '\n' + Array.from(uniqueMap.keys()).map(key => `${key} ${uniqueMap.get(key).join(' ')}`).join('\n')
 }
 
-void generate(hosts).then(console.log).catch(console.error).finally(() => process.exit())
+void generate().then(console.log).catch(console.error).finally(() => process.exit())
