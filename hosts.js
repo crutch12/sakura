@@ -36,7 +36,9 @@ const hosts = [
   'pp-integration.dev.curs.apps.innodev.local',
   'report.dev.curs.apps.innodev.local',
   'role-model.dev.curs.apps.innodev.local',
-]
+];
+
+const DEFAULT_ADDRESS = '10.234.156.183';
 
 const options = { family: 4 };
 
@@ -50,8 +52,13 @@ const generate = async (hosts) => {
   }
 
   for (const host of hosts) {
-    const { address } = await dns.lookup(host, options)
-    values.push({ host, address })
+    try {
+      const { address } = await dns.lookup(host, options);
+      values.push({ host, address })
+    } catch(err) {
+      console.info({ host, error: err });
+      values.push({ host, address: DEFAULT_ADDRESS })
+    }
   }
 
   if (values.length === 0) {
