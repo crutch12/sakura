@@ -68,25 +68,20 @@ $ wsl --shutdown
 # полный список образов
 $ wsl -l -o
 
-# ставим "Ubuntu". Или если хотите поставить другую версию, то можно, например Ubuntu-20.04
-$ wsl --install Ubuntu
-
-# пример с конкретной версией
-# $ wsl --install Ubuntu-20.04
+# ставим "Ubuntu-20.04" (или Ubuntu-22.04)
+$ wsl --install Ubuntu-20.04
 
 # во время установки указываем логин/пароль (root/password)
+
+# (опционально) меняем дефолтную версию версию wsl машины
+# чтобы все последующие команды можно вызывать без -d Ubuntu-20.04
+$ wsl --set-default Ubuntu-20.04
 ```
 
 > [!NOTE]
-> Если вы установили другой образ (например `Ubuntu-20.04`), то все последующие команды должны начинаться так:
+> Если вы **не настроили `wsl --set-default`** (если не хотите менять дефолтную машину), то все последующие wsl команды должны начинаться так:
 > ```sh
 > $ wsl -d Ubuntu-20.04
-> ```
-
-> [!TIP]
-> Для удобства можно поменять дефолтную версию wsl машины, тогда все последующие команды можно вызывать без `-d Ubuntu`:
-> ```sh
-> $ wsl --set-default Ubuntu-20.04
 > ```
 
 ## Настройка Ubuntu (установка Sakura, Cisco Anyconnect и т.д.)
@@ -97,7 +92,7 @@ $ wsl --install Ubuntu
 Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
 ```sh
-$ wsl -d Ubuntu sudo su -c "bash <(wget --no-cache -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
+$ wsl sudo su -c "bash <(wget --no-cache -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
 ```
 
 > [!NOTE]
@@ -107,7 +102,7 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget --no-cache -qO- https://raw.githubuserco
 > [!WARNING]
 > **Если после старта команды ничего не происходит, то, скорее всего, дело в настройках DNS. Тогда сначала запускаем команду и пробуем ещё раз**
 > ```sh
-> $ wsl -d Ubuntu sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
+> $ wsl sudo su -c "echo 'nameserver 8.8.8.8' > /etc/resolv.conf"
 > ```
 
 > [!WARNING]
@@ -123,7 +118,7 @@ $ wsl -d Ubuntu sudo su -c "bash <(wget --no-cache -qO- https://raw.githubuserco
 Проваливаемся в установленную Ubuntu и запускаем Cisco Anyconnect (откроется GUI форма)
 
 ```sh
-$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
+$ wsl sudo /opt/cisco/anyconnect/bin/vpnui
 ```
 
 - Открываем настройки (жмём на шестерёнку)
@@ -135,11 +130,9 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
   - **Не закрываем/останавливаем терминал**, иначе VPN отключится
 
 > [!TIP]
-> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /opt/cisco/anyconnect/bin/vpnui`
+> После первого запуска Windows автоматически создаст ярлык `Cisco Anyconnect Secure Mobility Client (Ubuntu)` (ищите в "Пуск").
 >
-> Или скачать готовый ярлык [Cisco Anyconnect Secure Mobility Client (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Cisco%20Anyconnect%20Secure%20Mobility%20Client%20(Ubuntu).lnk)
-> 
-> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+> **Последующие разы можно запускать через ярлык.**
 
 Теперь можем проверить, что VPN работает (пункт [Запуск Google Chrome в WSL](#запуск-google-chrome-в-wsl))
 
@@ -148,15 +141,15 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 Очень удобно, когда нам нужно открыть стенд/сферу/swagger/etc., т.к. у стендов много ip и сложно все добавить в hosts
 
 ```sh
-$ wsl -d Ubuntu google-chrome
+$ wsl google-chrome
 ```
 
+В открывшимся Google Chrome окне открываем ссылку https://sfera.inno.local
+
 > [!TIP]
-> Для удобства запуска можно создать ярлык `"C:\Program Files\WSL\wslg.exe" -d Ubuntu --cd "~" -- /usr/bin/google-chrome-stable`
+> После первого запуска Windows автоматически создаст ярлык `Google Chrome (Ubuntu)` (ищите в "Пуск").
 >
-> Или скачать готовый ярлык [Google Chrome (Ubuntu)](https://github.com/crutch12/sakura/raw/refs/heads/main/Desktop/Google%20Chrome%20(Ubuntu).lnk)
-> 
-> **После скачивания надо поменять расширение файла `.download` -> `.lnk`**
+> **Последующие разы можно запускать через ярлык.**
 
 # Настройка proxy (с хоста)
 
@@ -181,13 +174,13 @@ $ wsl -d Ubuntu google-chrome
 
 ```sh
 # сначала качаем список известных доменов (дальше его можно отредактировать руками)
-$ wsl -d Ubuntu wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/inno_hostnames.txt -O ~/inno_hostnames.txt
+$ wsl wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/inno_hostnames.txt -O ~/inno_hostnames.txt
 
 # теперь качаем скрипт
-$ wsl -d Ubuntu wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/hosts.js -O ~/hosts.js
+$ wsl wget --no-cache https://github.com/crutch12/sakura/raw/refs/heads/main/hosts.js -O ~/hosts.js
 
 # теперь выполняем скрипт. В ответ получим содержимое для hosts файла
-$ wsl -d Ubuntu node ~/hosts.js
+$ wsl node ~/hosts.js
 ```
 
 - Копируем результат вывода второй команды
@@ -197,10 +190,10 @@ $ wsl -d Ubuntu node ~/hosts.js
 >
 > ```sh
 > # редактируем (и сохраняем) inno_hostnames.txt список
-> $ wsl -d Ubuntu nano ~/inno_hostnames.txt
+> $ wsl nano ~/inno_hostnames.txt
 > 
 > # ещё раз запускаем скрипт и копируем результат
-> $ wsl -d Ubuntu node ~/hosts.js
+> $ wsl node ~/hosts.js
 > ```
 
 ### Шаг 2. Меняем файл hosts (открываем от админа)
@@ -224,7 +217,7 @@ $ wsl -d Ubuntu node ~/hosts.js
 Если по мере работы с сервисами встретили неизвестный домен, то можно получить его ip вручную. Пример:
 
 ```sh
-$ wsl -d Ubuntu dig +short git.sfera.inno.local
+$ wsl dig +short git.sfera.inno.local
 ```
 
 > [!WARNING]
@@ -266,14 +259,14 @@ $ wsl -d Ubuntu dig +short git.sfera.inno.local
 
   ```sh
   # через wsl вызов (берём ip, который слева)
-  $ wsl -d Ubuntu hostname -I
+  $ wsl hostname -I
 
   # или через wsl машину
-  $ wsl -d Ubuntu
+  $ wsl
   $ ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
 
   # или через wsl машину в одну команду, но без grep
-  $ wsl -d Ubuntu ip addr show eth0
+  $ wsl ip addr show eth0
   ```
 
   Полученный адрес (например `172.25.203.50`) добавляем в hosts (`C:\Windows\System32\drivers\etc\hosts`) файл
@@ -425,9 +418,9 @@ if (process.env.GLOBAL_AGENT_HTTP_PROXY) {
 
 ```sh
 # выкл
-$ wsl -t Ubuntu
+$ wsl -t Ubuntu-20.04
 # вкл
-$ wsl -d Ubuntu
+$ wsl -d Ubuntu-20.04
 
 # если предыдущий пример не работает
 $ wsl --shutdown
@@ -437,15 +430,15 @@ $ wsl --shutdown
 
 ```sh
 # статус
-$ wsl -d Ubuntu sudo systemctl status squid
+$ wsl sudo systemctl status squid
 
 # логи запросов
-$ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
+$ wsl sudo tail +1f /var/log/squid/access.log
 ```
 
 ### Если нужного адреса нету в hosts
 
-1) `$ wsl -d Ubuntu dig +short git.sfera.inno.local`
+1) `$ wsl dig +short git.sfera.inno.local`
 2) Добавляем первый результат в hosts
 
 ### Если на диске C: не хватает места под машины wsl
@@ -472,7 +465,7 @@ $ wsl -d Ubuntu sudo tail +1f /var/log/squid/access.log
 Или через терминал
 
 ```sh
-$ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
+$ wsl sudo /opt/cisco/anyconnect/bin/vpnui
 ```
 
 ### Отключение VPN
@@ -493,13 +486,13 @@ $ wsl -d Ubuntu sudo /opt/cisco/anyconnect/bin/vpnui
 
 ```sh
 # отключить запущенный сервис 
-$ wsl -d Ubuntu sudo systemctl stop sakura
+$ wsl sudo systemctl stop sakura
 
 # рестарт сервиса
-$ wsl -d Ubuntu sudo systemctl restart sakura
+$ wsl sudo systemctl restart sakura
 
 # отключить автозапуск сервиса (enable, если нужно вернуть)
-$ wsl -d Ubuntu sudo systemctl disable sakura
+$ wsl sudo systemctl disable sakura
 ```
 
 ## Работа с проектом напрямую из WSL
@@ -513,15 +506,15 @@ Git
 
 ```sh
 # сначала cd в папку с git репой
-$ wsl -d Ubuntu git push
+$ wsl git push
 ```
 
 Npm
 
 ```sh
 # сначала cd в папку с git репой
-$ wsl -d Ubuntu npm i
-$ wsl -d Ubuntu npm run dev
+$ wsl npm i
+$ wsl npm run dev
 ```
 
 ### Через VS Code WSL
