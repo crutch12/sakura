@@ -1,7 +1,7 @@
-const dns = require('node:dns/promises');
-const os = require('node:os');
-const fs = require('node:fs/promises');
-const path = require('node:path');
+const dns = require('node:dns/promises')
+const os = require('node:os')
+const fs = require('node:fs/promises')
+const path = require('node:path')
 
 const INNO_PROXY_HOST = 'inno-proxy'
 
@@ -18,8 +18,6 @@ const DEFAULT_HOSTNAMES = [
   'curs-root-ui.dev.curs.apps.innodev.local',
   'api-gw.dev.curs.apps.innodev.local'
 ]
-
-const options = { family: 4 };
 
 const getHostnames = async () => {
   const text = await fs.readFile(path.resolve(__dirname, './inno_hostnames.txt'), 'utf8').catch(() => undefined)
@@ -52,7 +50,7 @@ const generate = async () => {
   const hostnames = await getHostnames()
 
   for (const host of hostnames) {
-    const { address } = await dns.lookup(host, options)
+    const { address } = await dns.lookup(host, { family: 4 })
     values.push({ host, address })
   }
 
@@ -66,7 +64,23 @@ const generate = async () => {
     uniqueMap.set(value.address, values.filter(x => x.address === value.address).map(x => x.host))
   }
 
-  return '\n' + Array.from(uniqueMap.keys()).map(key => `${key} ${uniqueMap.get(key).join(' ')}`).join('\n')
+  return '\n### hosts.js - start ###\n' + Array.from(uniqueMap.keys()).map(key => `${key} ${uniqueMap.get(key).join(' ')}`).join('\n') + '\n### hosts.js - end ###\n'
 }
 
-void generate().then(console.log).catch(console.error).finally(() => process.exit())
+const [, , ...args] = process.argv
+
+const WSL_WINDOWS_HOSTS_FILE = '/mnt/c/Windows/System32/drivers/etc/hosts'
+
+void generate().then(async (result) => {
+  console.log(result)
+  if (args.includes('--save')) {
+    console.log('\nTrying to save (rewrite) result to', WSL_WINDOWS_HOSTS_FILE)
+    await fs.writeFile(WSL_WINDOWS_HOSTS_FILE, result, 'utf8')
+    console.log('\nSuccess!')
+  }
+  else if (args.includes('--append')) {
+    console.log('\nTrying to add (append) result to', WSL_WINDOWS_HOSTS_FILE)
+    await fs.appendFile(WSL_WINDOWS_HOSTS_FILE, result, 'utf8')
+    console.log('\nSuccess!')
+  }
+})
