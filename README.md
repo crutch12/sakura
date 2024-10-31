@@ -1,9 +1,13 @@
 Windows: WSL (Ubuntu) + Sakura + Cisco Anyconnect
 
 > [!NOTE]
-> Проверялось на версиях Ubuntu
+> Работает на версиях Ubuntu
 > - ubuntu:20.04
 > - ubuntu:22.04
+
+> [!CAUTION]
+> Не работает на версиях Ubuntu
+> - ubuntu:24.04 (из-за библиотеки `libwebkit2gtk-4.0-37`)
 
 # Проблема и решение
 
@@ -66,6 +70,10 @@ $ wsl -l -o
 
 # ставим "Ubuntu". Или если хотите поставить другую версию, то можно, например Ubuntu-20.04
 $ wsl --install Ubuntu
+
+# пример с конкретной версией
+# $ wsl --install Ubuntu-20.04
+
 # во время установки указываем логин/пароль (root/password)
 ```
 
@@ -73,6 +81,12 @@ $ wsl --install Ubuntu
 > Если вы установили другой образ (например `Ubuntu-20.04`), то все последующие команды должны начинаться так:
 > ```sh
 > $ wsl -d Ubuntu-20.04
+> ```
+
+> [!TIP]
+> Для удобства можно поменять дефолтную версию wsl машины, тогда все последующие команды можно вызывать без `-d Ubuntu`:
+> ```sh
+> $ wsl --set-default Ubuntu-20.04
 > ```
 
 ## Настройка Ubuntu (установка Sakura, Cisco Anyconnect и т.д.)
@@ -83,7 +97,7 @@ $ wsl --install Ubuntu
 Проваливаемся в установленную Ubuntu и устанавливаем все нужные пакеты (Sakura, Cisco, Google Chrome)
 
 ```sh
-$ wsl -d Ubuntu sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
+$ wsl -d Ubuntu sudo su -c "bash <(wget --no-cache -qO- https://raw.githubusercontent.com/crutch12/sakura/refs/heads/main/setup.sh)" root
 ```
 
 > [!NOTE]
