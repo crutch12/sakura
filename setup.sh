@@ -30,9 +30,8 @@ sudo wget https://github.com/crutch12/sakura/raw/refs/heads/main/squid.conf -O /
 sudo systemctl restart squid
 
 # установка node.js (для скрипта hosts.js)
-sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-nvm install 18
-nvm use 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
 
 # установка Google Chrome (на случай, если не нужно проксирование и/или не знаем все DNS адреса и хотим просто через браузер посмотреть)
 sudo apt install -y fonts-liberation libnspr4 libnss3 libvulkan1 xdg-utils
