@@ -416,6 +416,26 @@ if (process.env.GLOBAL_AGENT_HTTP_PROXY) {
 }
 ```
 
+## maven
+
+На host (windows) машине в `%USERPROFILE%\.m2\settings.xml` (`C:\Users\<UserName>\.m2\settings.xml`) добавить:
+
+```xml
+<settings>
+  .
+  .
+  <proxies>
+   <proxy>
+      <host>inno-proxy</host>
+      <port>3128</port>
+    </proxy>
+  </proxies>
+  .
+  .
+</settings>
+
+```
+
 # Troubleshooting
 
 ### Иногда wsl нужно полностью перезапускать, т.к. впн ломается
