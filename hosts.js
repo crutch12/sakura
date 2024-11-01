@@ -19,6 +19,9 @@ const DEFAULT_HOSTNAMES = [
   'api-gw.dev.curs.apps.innodev.local'
 ]
 
+const START_TAG = '### hosts.js - start ###'
+const END_TAG = '### hosts.js - end ###'
+
 const getHostnames = async () => {
   const text = await fs.readFile(path.resolve(__dirname, './inno_hostnames.txt'), 'utf8').catch(() => undefined)
 
@@ -64,7 +67,7 @@ const generate = async () => {
     uniqueMap.set(value.address, values.filter(x => x.address === value.address).map(x => x.host))
   }
 
-  return '\n### hosts.js - start ###\n' + Array.from(uniqueMap.keys()).map(key => `${key} ${uniqueMap.get(key).join(' ')}`).join('\n') + '\n### hosts.js - end ###\n'
+  return `${START_TAG}\n` + Array.from(uniqueMap.keys()).map(key => `${key} ${uniqueMap.get(key).join(' ')}`).join('\n') + `\n${END_TAG}`
 }
 
 const [, , ...args] = process.argv
@@ -72,15 +75,25 @@ const [, , ...args] = process.argv
 const WSL_WINDOWS_HOSTS_FILE = '/mnt/c/Windows/System32/drivers/etc/hosts'
 
 void generate().then(async (result) => {
-  console.log(result)
+  console.log('\n' + result + '\n')
+
   if (args.includes('--save')) {
-    console.log('\nTrying to save (rewrite) result to', WSL_WINDOWS_HOSTS_FILE)
-    await fs.writeFile(WSL_WINDOWS_HOSTS_FILE, result, 'utf8')
-    console.log('\nSuccess!')
-  }
-  else if (args.includes('--append')) {
-    console.log('\nTrying to add (append) result to', WSL_WINDOWS_HOSTS_FILE)
-    await fs.appendFile(WSL_WINDOWS_HOSTS_FILE, result, 'utf8')
+    console.log('\nTrying to save result to', WSL_WINDOWS_HOSTS_FILE)
+
+    const content = await fs.readFile(WSL_WINDOWS_HOSTS_FILE, 'utf8')
+    const rows = content.split('\n').map(x => x.trim())
+    const start = rows.indexOf(START_TAG)
+    const end = rows.indexOf(END_TAG)
+
+    if (start >= 0 && end > start) { // replace
+      const before = rows.slice(0, start).join('\n')
+      const after = rows.slice(end + 1).join('\n')
+      await fs.writeFile(WSL_WINDOWS_HOSTS_FILE, before + '\n' + result + '\n' + after, 'utf8')
+    }
+    else { // append
+      await fs.writeFile(WSL_WINDOWS_HOSTS_FILE, content + '\n\n' + result + '\n', 'utf8')
+    }
+
     console.log('\nSuccess!')
   }
 })
